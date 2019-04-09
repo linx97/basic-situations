@@ -5,7 +5,7 @@
 	<meta name="viewport" content="initial-scale=1, minimum-scale=0.1, maximum-scale=3.0, user-scalable=yes"/>
 	<script src="https://code.jquery.com/jquery-3.3.1.min.js" integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8=" crossorigin="anonymous"></script>
 	<script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
-	<script src="touch-punch.min.js"></script>
+	
 	<link href="https://fonts.googleapis.com/css?family=Anton" rel="stylesheet">
 	<link rel="stylesheet" href="https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
 	<style>
@@ -22,17 +22,19 @@
 		}
 		.main {
 			width: 100%;
-			height: 88vh;
+			height: 86vh;
 			display: -webkit-flex; /* Safari */
 		    -webkit-align-items: center; /* Safari 7.0+ */
 		    display: flex;
 		    align-items: center;
 		    justify-content: center;
+	        flex-flow: column wrap;
 		}
 		h1 {
 			font-size: 150px;
 			display: block;
 			letter-spacing: 3px;
+			margin-bottom: 20px
 		}
 		.levels span {
 			font-size: 20px;
@@ -42,6 +44,7 @@
 		#slider {
 			width: 222px;
     		margin: auto;
+		    margin-bottom: 15px;
 		}
 		.ui-state-default, .ui-widget-content .ui-state-default, .ui-widget-header .ui-state-default {
 		    background: #9f0208;
@@ -57,6 +60,19 @@
 		:focus {
 		    outline: none;
 		}
+		.type {
+			height: 90px;
+		}
+		.hide {
+			display: none;
+		}
+		#start {
+			padding: 10px 50px;
+			border-radius: 2px;
+			color: #fff;
+			background-color: #9f0208;
+			font-size: 1.6rem;
+		}
 		@media screen and (max-width: 500px) {
 			h1 {
 				font-size: 80px;
@@ -68,38 +84,61 @@
 				height: 80vh;
 			}
 		}
-		@media screen and (max-width: 330px) {
+		@media screen and (max-width: 500px) {
+			h1 {
+				font-size: 80px;
+			}
+			h1.lrg {
+				font-size: 150px;
+				margin-top: -30px;
+				margin-bottom: 0;
+			}
 			.main {
-				height: 75vh;
+				height: 80vh;
 			}
 		}
 	</style>
 </head>
 <body>
 	<div class="main">
-		<h1 id="text">Ready...</h1>
+		<div id="start">START</div>
+		<h1 id="text"></h1>
+		<div>
+			<img src="" alt="" class="type">
+		</div>
+		
 	</div>
 	<p>Response Time: <span class="time">15</span> seconds</p>
 	<div id="slider"></div>
+	<input type="checkbox" checked id="punch-check"> punch/kick indicator
+	<input type="checkbox" checked id="voice-check"> voice indicator
 	<script>
 		$(document).ready(function(){
 			var interval = 15000;
+			var speech = true;
 
 			var situations = ['1A', '1B', '1C', '2', '3A', '3B', '3C', '3D', '3E', '4', '5A', '5B', '6', '7A', '7B', '8'];
+			var types = ['one-punch', 'one-punch', 'two-punches', 'one-punch', 'two-punches', 'one-punch', 'two-punches', 'one-punch', 'one-punch', 'one-punch', 'kick', 'kick', 'kick', 'one-punch', 'one-punch', 'one-punch'];
 			var go;
 
-			setTimeout(function(){
-				$('#text').text('Set...');
-			}, 3000);
-			setTimeout(function(){
-				$('#text').text('Go!');
-			}, 6000);
-			setTimeout(function(){
-				$('#text').addClass('lrg');
-				var random = situations[Math.floor(Math.random() * situations.length)];
-				$('#text').text(random);
-				startInterval();
-			}, 8000);
+			$('#start').click(function(){
+				$('#start').addClass('hide');
+				$('#text').text('Ready...');
+				setTimeout(function(){
+					$('#text').text('Set...');
+				}, 3000);
+				setTimeout(function(){
+					$('#text').text('Go!');
+				}, 6000);
+				setTimeout(function(){
+					$('#text').addClass('lrg');
+					changeSituation();
+					go = setInterval(function(){
+						changeSituation();
+					}, interval);
+				}, 8000);
+			})
+
 
 			$( "#slider" ).slider({
 				range: "min",
@@ -112,16 +151,45 @@
 			        $( ".time" ).text( ui.value );
 			        interval = ui.value * 1000;
 			        clearInterval(go);
-				startInterval(go);
+					startInterval(go);
 			      }
 				}
 			 );
 
+			$('#punch-check').change(
+		    	function(){
+		        if (!$(this).is(':checked')) {
+		            $('.type').addClass('hide');
+		        } else {
+		        	$('.type').removeClass('hide');
+		        }
+		    });
+
+		 	$('#voice-check').change(
+		    	function(){
+		        if (!$(this).is(':checked')) {
+		            speech = false;
+		        } else {
+		        	speech = true;
+		        }
+		    });
+
 			var startInterval = function(){
 				go = setInterval(function(){
-					random = situations[Math.floor(Math.random() * situations.length)];
-					$('#text').text(random);
+					changeSituation();
 				}, interval);
+			}
+
+			var changeSituation = function() {
+				var random = Math.floor(Math.random() * situations.length);
+				var situation = situations[random]
+				var type = types[random] + ".png";
+				$('#text').text(situation);
+				$('.type').attr("src", type);
+				if(speech){
+  					var msg = new SpeechSynthesisUtterance(situation);
+					window.speechSynthesis.speak(msg);
+				}
 			}
 		})
 	</script>
